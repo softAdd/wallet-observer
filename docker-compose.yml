@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  frontend:
+    build: ./frontend
+    image: 'finup-react:1.0.0'
+    networks:
+      - finup-net
+  mongodb:
+    build: ./mongo
+    image: 'finup-mongo:1.0.0'
+    restart: unless-stopped
+    volumes:
+      - ./mongo/mongo_data:/data/db
+    networks:
+      - finup-net
+  auth-backend:
+    depends_on:
+      - mongodb
+    build: ./b-auth
+    image: 'finup-b-auth:1.0.0'
+    restart: unless-stopped
+    env_file:
+      - ./env/db.env
+      - ./env/jwt-secret.env
+    networks:
+      - finup-net
+  user-backend:
+    depends_on:
+      - mongodb
+    build: ./b-user
+    image: 'finup-b-user:1.0.0'
+    restart: unless-stopped
+    env_file:
+      - ./env/db.env
+      - ./env/jwt-secret.env
+    networks:
+      - finup-net
+  revproxy:
+    build: ./revproxy
+    image: 'finup-revproxy:1.0.0'
+    restart: unless-stopped
+    networks:
+      - finup-net
+    ports:
+      - '80:80'
+
+networks:
+  finup-net:
